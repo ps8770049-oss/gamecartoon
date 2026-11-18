@@ -1,0 +1,396 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cartoon Fun - Play Games</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#1769e8;--navy:#102b54;--yellow:#ffcf33;--bg:#f3f8ff}
+body{font-family:Arial,sans-serif;background:var(--bg);color:#17294a}
+header{background:var(--navy);color:white;padding:16px 6%;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.logo{font-size:27px;font-weight:900;color:var(--yellow)}
+nav{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+nav a{color:white;text-decoration:none;font-weight:bold}
+button{cursor:pointer;border:0;border-radius:12px;padding:11px 17px;font-weight:bold}
+button:hover{filter:brightness(.95);transform:translateY(-1px)}
+.hero{padding:45px 6%;background:linear-gradient(125deg,#06baf5,#5677ff,#9c55e8);color:white;text-align:center}
+.hero h1{font-size:clamp(32px,5vw,55px);text-shadow:2px 4px #263b8c;margin-bottom:12px}
+.hero p{line-height:1.7;margin-bottom:22px}
+.search{padding:14px 20px;border:0;border-radius:30px;width:min(100%,470px);font-size:16px}
+main{max-width:1250px;margin:auto;padding:30px 5%}
+.categories{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:30px}
+.cat{background:white;color:var(--navy);border:2px solid #dce9ff}
+.cat.active{background:var(--yellow);border-color:var(--yellow)}
+.heading{font-size:26px;margin:25px 0 18px}
+.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+.card{background:white;border-radius:20px;overflow:hidden;box-shadow:0 5px 20px #183c7012;transition:.2s}
+.card:hover{transform:translateY(-5px)}
+.card-art{height:145px;display:grid;place-items:center;font-size:76px;background:linear-gradient(135deg,#b5f1ff,#e9d9ff)}
+.card:nth-child(2n) .card-art{background:linear-gradient(135deg,#ffdfec,#fff0b5)}
+.card-info{padding:18px}
+.card-info p{color:#66748c;line-height:1.6;font-size:14px;margin:9px 0 15px}
+.play{background:var(--blue);color:white;width:100%;font-size:15px}
+.badge{font-size:11px;background:#e7f1ff;color:#1769e8;padding:5px 9px;border-radius:20px}
+.game-area{display:none;background:white;border-radius:22px;padding:24px;margin-top:30px;box-shadow:0 5px 25px #183c7015}
+.game-area.show{display:block}
+.game-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.close{background:#ffe7e7;color:#a32424}
+.primary{background:var(--blue);color:white}
+.game-board{margin:20px auto;max-width:600px}
+#catchCanvas{display:block;width:100%;background:linear-gradient(#8ce5ff,#e8faff);border:3px solid #d4edff;border-radius:15px;touch-action:none}
+.game-buttons{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:15px 0}
+.memory{display:grid;grid-template-columns:repeat(4,minmax(48px,85px));gap:9px;justify-content:center}
+.memory button{height:75px;font-size:30px;background:#dbe9ff;color:#174a9d;padding:0}
+.memory button.revealed{background:#fff0b5}
+.memory button.matched{background:#c9f8db}
+.ttt{display:grid;grid-template-columns:repeat(3,85px);gap:8px;justify-content:center}
+.ttt button{height:85px;font-size:34px;background:#e9f0ff;color:#1769e8}
+.rps{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.rps button{font-size:36px;background:#edf3ff}
+.result{text-align:center;font-size:18px;font-weight:bold;margin:15px 0;min-height:25px}
+footer{background:var(--navy);color:white;text-align:center;padding:28px 15px;line-height:1.8;margin-top:30px}
+footer span{color:var(--yellow)}
+@media(max-width:600px){
+header{justify-content:center}
+nav{justify-content:center}
+.hero{padding:35px 5%}
+main{padding:20px 4%}
+.game-area{padding:15px}
+.ttt{grid-template-columns:repeat(3,72px)}
+.ttt button{height:72px}
+}
+</style>
+</head>
+
+<body>
+<header>
+  <div class="logo">🎮 Cartoon Fun!</div>
+  <nav>
+    <a href="#home">🏠 Home</a>
+    <a href="#games">🎯 Games</a>
+    <a href="#games" onclick="showAll()">⭐ All Games</a>
+  </nav>
+</header>
+
+<section class="hero" id="home">
+  <h1>Let's Play Cartoon Games! 🎉</h1>
+  <p>Fun • Adventure • Brain Games • Puzzles<br>
+  Choose a game and start playing!</p>
+  <input id="search" class="search" placeholder="🔍 Search games..."
+    oninput="renderGames()">
+</section>
+
+<main id="games">
+  <div class="categories">
+    <button class="cat active" onclick="setCategory('All',this)">🎮 All Games</button>
+    <button class="cat" onclick="setCategory('Action',this)">⭐ Action</button>
+    <button class="cat" onclick="setCategory('Puzzle',this)">🧩 Puzzle</button>
+    <button class="cat" onclick="setCategory('Brain',this)">🧠 Brain</button>
+  </div>
+
+  <h2 class="heading">🔥 Popular Games</h2>
+  <div class="games" id="gameCards"></div>
+
+  <section class="game-area" id="gameArea">
+    <div class="game-head">
+      <h2 id="gameTitle">Game</h2>
+      <button class="close" onclick="closeGame()">✖ Close</button>
+    </div>
+    <div id="gameContent"></div>
+  </section>
+</main>
+
+<footer>
+  <h2>🎮 <span>Cartoon Fun!</span></h2>
+  <p>Play, Learn and Have Fun! 💙</p>
+  <p>© 2026 Cartoon Fun Games</p>
+</footer>
+
+<script>
+const games=[
+ {id:'catch',name:'Catch the Stars',emoji:'⭐',cat:'Action',
+  desc:'Move your basket and catch falling stars!',tag:'Arcade'},
+ {id:'memory',name:'Memory Match',emoji:'🧠',cat:'Brain',
+  desc:'Remember the cards and find matching pairs.',tag:'Brain'},
+ {id:'ttt',name:'Tic-Tac-Toe',emoji:'❌',cat:'Puzzle',
+  desc:'Play X and O against the computer.',tag:'Puzzle'},
+ {id:'rps',name:'Rock Paper Scissors',emoji:'✊',cat:'Action',
+  desc:'Choose your move and beat the computer.',tag:'Fun'}
+];
+let category='All';
+let currentGame=null;
+let timer=null;
+let canvasCleanup=null;
+
+function renderGames(){
+ const q=document.getElementById('search').value.toLowerCase();
+ const list=games.filter(g=>
+  (category==='All'||g.cat===category)&&
+  (g.name.toLowerCase().includes(q)||g.desc.toLowerCase().includes(q))
+ );
+ document.getElementById('gameCards').innerHTML=list.map(g=>`
+  <article class="card">
+   <div class="card-art">${g.emoji}</div>
+   <div class="card-info">
+    <span class="badge">${g.tag}</span>
+    <h3 style="margin-top:12px">${g.name}</h3>
+    <p>${g.desc}</p>
+    <button class="play" onclick="startGame('${g.id}')">▶ Play Now</button>
+   </div>
+  </article>`).join('')||'<p>No games found. Try another search.</p>';
+}
+function setCategory(c,btn){
+ category=c;
+ document.querySelectorAll('.cat').forEach(b=>b.classList.remove('active'));
+ btn.classList.add('active');
+ renderGames();
+}
+function showAll(){
+ category='All';
+ document.querySelectorAll('.cat').forEach(b=>b.classList.remove('active'));
+ document.querySelector('.cat').classList.add('active');
+ renderGames();
+}
+function closeGame(){
+ if(timer){clearInterval(timer);timer=null}
+ if(canvasCleanup){canvasCleanup();canvasCleanup=null}
+ document.getElementById('gameArea').classList.remove('show');
+ currentGame=null;
+}
+function startGame(id){
+ closeGame();
+ currentGame=id;
+ const game=games.find(g=>g.id===id);
+ document.getElementById('gameTitle').textContent=game.name;
+ document.getElementById('gameArea').classList.add('show');
+ const content=document.getElementById('gameContent');
+ content.innerHTML='';
+ if(id==='catch') startCatch(content);
+ if(id==='memory') startMemory(content);
+ if(id==='ttt') startTTT(content);
+ if(id==='rps') startRPS(content);
+ document.getElementById('gameArea').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// GAME 1: CATCH THE STARS
+function startCatch(root){
+ root.innerHTML=`
+  <p style="text-align:center">Use ← → keys or the buttons to catch stars!</p>
+  <p class="result" id="catchScore">Score: 0</p>
+  <canvas id="catchCanvas" width="600" height="330"></canvas>
+  <div class="game-buttons">
+   <button class="primary" id="leftBtn">⬅ Left</button>
+   <button class="primary" id="rightBtn">Right ➡</button>
+   <button onclick="startGame('catch')">🔄 Restart</button>
+  </div>
+  <p class="result" id="catchMsg">Press Start Game to begin.</p>
+  <div class="game-buttons"><button class="primary" id="catchStart">▶ Start Game</button></div>`;
+ const c=document.getElementById('catchCanvas');
+ const ctx=c.getContext('2d');
+ let basket={x:270,y:280,w:65};
+ let stars=[],score=0,playing=false,frame=0,keys={};
+ function draw(){
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.fillStyle='#d9f6ff';ctx.fillRect(0,0,600,330);
+  ctx.font='26px Arial';ctx.fillText('☁️',30,55);ctx.fillText('☁️',480,65);
+  ctx.font='40px Arial';ctx.fillText('🧺',basket.x,basket.y+25);
+  stars.forEach(s=>{ctx.font='25px Arial';ctx.fillText('⭐',s.x,s.y)});
+ }
+ function keydown(e){
+  if(['ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();
+  keys[e.key]=true;
+ }
+ function keyup(e){keys[e.key]=false}
+ function move(dir){basket.x=Math.max(0,Math.min(535,basket.x+dir*25))}
+ function loop(){
+  if(!playing)return;
+  frame++;
+  if(keys.ArrowLeft)move(-1);
+  if(keys.ArrowRight)move(1);
+  if(frame%35===0)stars.push({x:Math.random()*560,y:-10});
+  stars.forEach(s=>s.y+=3);
+  stars=stars.filter(s=>{
+   if(s.y>basket.y-5&&s.y<basket.y+25&&s.x>basket.x-10&&s.x<basket.x+60){
+    score++;document.getElementById('catchScore').textContent='Score: '+score;return false;
+   }
+   return s.y<340;
+  });
+  draw();
+  if(frame>900){
+   playing=false;
+   document.getElementById('catchMsg').textContent='Game Over! Your score: '+score;
+   return;
+  }
+  timer=requestAnimationFrame(loop);
+ }
+ let raf=null;
+ // Use a dedicated animation frame loop.
+ function tick(){
+  if(!playing)return;
+  frame++;
+  if(keys.ArrowLeft)basket.x=Math.max(0,basket.x-4);
+  if(keys.ArrowRight)basket.x=Math.min(535,basket.x+4);
+  if(frame%35===0)stars.push({x:Math.random()*560,y:-10});
+  stars.forEach(s=>s.y+=3);
+  stars=stars.filter(s=>{
+   if(s.y>basket.y-5&&s.y<basket.y+25&&s.x>basket.x-10&&s.x<basket.x+60){
+    score++;document.getElementById('catchScore').textContent='Score: '+score;return false;
+   }
+   return s.y<340;
+  });
+  draw();
+  if(frame>=900){
+   playing=false;
+   document.getElementById('catchMsg').textContent='Game Over! Score: '+score;
+   return;
+  }
+  raf=requestAnimationFrame(tick);
+ }
+ function start(){
+  if(playing)return;
+  playing=true;
+  document.getElementById('catchMsg').textContent='Catch as many stars as you can!';
+  raf=requestAnimationFrame(tick);
+ }
+ const kd=e=>{if(['ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();keys[e.key]=true};
+ const ku=e=>keys[e.key]=false;
+ document.addEventListener('keydown',kd);
+ document.addEventListener('keyup',ku);
+ document.getElementById('leftBtn').onpointerdown=()=>move(-1);
+ document.getElementById('rightBtn').onpointerdown=()=>move(1);
+ document.getElementById('catchStart').onclick=start;
+ draw();
+ canvasCleanup=()=>{playing=false;cancelAnimationFrame(raf);document.removeEventListener('keydown',kd);document.removeEventListener('keyup',ku)};
+}
+
+// GAME 2: MEMORY MATCH
+function startMemory(root){
+ const icons=['🐱','🐶','🐸','🦊','🐼','🦄','🐵','🐰'];
+ let cards=[...icons,...icons].sort(()=>Math.random()-.5);
+ let first=null,lock=false,moves=0,matched=0;
+ root.innerHTML=`
+  <p style="text-align:center">Find all matching cartoon pairs!</p>
+  <p class="result" id="memScore">Moves: 0 | Pairs: 0/8</p>
+  <div class="memory" id="memoryBoard"></div>
+  <p class="result" id="memMsg">Choose two cards.</p>
+  <div class="game-buttons"><button class="primary" onclick="startGame('memory')">🔄 Restart</button></div>`;
+ const board=document.getElementById('memoryBoard');
+ cards.forEach((icon,i)=>{
+  const b=document.createElement('button');
+  b.textContent='❔';
+  b.setAttribute('aria-label','Hidden card');
+  b.onclick=()=>{
+   if(lock||b.classList.contains('matched')||b===first)return;
+   b.textContent=icon;b.classList.add('revealed');b.setAttribute('aria-label',icon);
+   if(!first){first=b;return}
+   moves++;
+   if(first.textContent===icon){
+    first.classList.add('matched');b.classList.add('matched');
+    matched++;first=null;
+    document.getElementById('memMsg').textContent='Great match! 🎉';
+    if(matched===8)document.getElementById('memMsg').textContent='You won! Amazing memory! 🏆';
+   }else{
+    lock=true;
+    const previous=first;first=null;
+    timer=setTimeout(()=>{
+     previous.textContent='❔';b.textContent='❔';
+     previous.classList.remove('revealed');b.classList.remove('revealed');
+     previous.setAttribute('aria-label','Hidden card');b.setAttribute('aria-label','Hidden card');
+     lock=false;timer=null;
+    },700);
+   }
+   document.getElementById('memScore').textContent=`Moves: ${moves} | Pairs: ${matched}/8`;
+  };
+  board.appendChild(b);
+ });
+}
+
+// GAME 3: TIC TAC TOE
+function startTTT(root){
+ let board=Array(9).fill(''),over=false;
+ root.innerHTML=`
+  <p style="text-align:center">You are ❌. The computer is ⭕.</p>
+  <div class="ttt" id="tttBoard"></div>
+  <p class="result" id="tttMsg">Your turn!</p>
+  <div class="game-buttons"><button class="primary" onclick="startGame('ttt')">🔄 Restart</button></div>`;
+ const el=document.getElementById('tttBoard');
+ for(let i=0;i<9;i++){
+  const b=document.createElement('button');
+  b.onclick=()=>play(i);
+  el.appendChild(b);
+ }
+ function winner(){
+  const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for(const line of lines){
+   const [a,b,c]=line;
+   if(board[a]&&board[a]===board[b]&&board[a]===board[c])return board[a];
+  }
+  return board.every(Boolean)?'draw':null;
+ }
+ function update(){
+  [...el.children].forEach((b,i)=>b.textContent=board[i]);
+ }
+ function play(i){
+  if(over||board[i])return;
+  board[i]='❌';update();
+  let w=winner();
+  if(w){finish(w);return}
+  document.getElementById('tttMsg').textContent='Computer is thinking...';
+  timer=setTimeout(()=>{
+   timer=null;
+   if(over)return;
+   let free=board.map((v,i)=>v?null:i).filter(v=>v!==null);
+   if(free.length){
+    const choice=free[Math.floor(Math.random()*free.length)];
+    board[choice]='⭕';update();
+   }
+   w=winner();
+   if(w)finish(w);
+   else document.getElementById('tttMsg').textContent='Your turn!';
+  },350);
+ }
+ function finish(w){
+  over=true;
+  document.getElementById('tttMsg').textContent=
+   w==='draw'?'It is a draw! 🤝':w==='❌'?'You win! 🏆':'Computer wins! Try again!';
+ }
+}
+
+// GAME 4: ROCK PAPER SCISSORS
+function startRPS(root){
+ let userScore=0,computerScore=0;
+ root.innerHTML=`
+  <p style="text-align:center">First to 5 points wins!</p>
+  <p class="result" id="rpsScore">You 0 - 0 Computer</p>
+  <div class="rps">
+   <button onclick="rpsPlay('✊')">✊<br><small>Rock</small></button>
+   <button onclick="rpsPlay('✋')">✋<br><small>Paper</small></button>
+   <button onclick="rpsPlay('✌️')">✌️<br><small>Scissors</small></button>
+  </div>
+  <p class="result" id="rpsMsg">Choose your move!</p>
+  <div class="game-buttons"><button class="primary" onclick="startGame('rps')">🔄 Restart</button></div>`;
+ window.rpsPlay=function(user){
+  if(currentGame!=='rps')return;
+  if(userScore>=5||computerScore>=5)return;
+  const moves=['✊','✋','✌️'];
+  const computer=moves[Math.floor(Math.random()*3)];
+  let msg='';
+  if(user===computer)msg='It is a tie! 🤝';
+  else if((user==='✊'&&computer==='✌️')||(user==='✋'&&computer==='✊')||(user==='✌️'&&computer==='✋')){
+   userScore++;msg='You win this round! 🎉';
+  }else{computerScore++;msg='Computer wins this round! 🤖'}
+  document.getElementById('rpsScore').textContent=`You ${userScore} - ${computerScore} Computer`;
+  document.getElementById('rpsMsg').textContent=`You ${user} vs ${computer} Computer. ${msg}`;
+  if(userScore===5||computerScore===5){
+   document.getElementById('rpsMsg').textContent+=userScore===5?' You won the game! 🏆':' Computer won the game!';
+  }
+ };
+}
+
+renderGames();
+</script>
+</body>
+</html>
